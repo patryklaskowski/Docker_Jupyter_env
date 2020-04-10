@@ -1,0 +1,398 @@
+#!/bin/bash
+# Dive into attached README.md to find out what's going on here.
+# Basically it is a simple script that fire up the jupyter notebook in docker container -
+# - with bunch of presets for data science purposes.
+
+# To run these processes correctly the Docker image suppose to be built and shared on DockerHub previously.
+# Otherwise you may have image saved locally.
+# TAG: patryklaskowski/my_docker_jupyter_project
+
+#################################
+########             ############
+########  FUNCTIONS  ############
+########             ############
+#################################
+welcome () {
+echo -e "\n\n|-------------------------------------------|"
+echo -e "|-------RUNNING-----------------------------|"
+echo -e "|-----------------DOCKER SCRIPT-------------|"
+echo -e "|----------------------by Patryk Laskowski--|"
+echo -e "|-------------------------------------------|\n\n"
+}
+#################################
+#################################
+askToOpenDocker () {
+
+echo "|-------------------------------------------|"
+read -p "| Do you want to open Docker.app? [y/n]:  `echo $'\n|-------------------------------------------|'` `echo $'\n : '`" VAR1
+
+if [ "$VAR1" = "y" ]; then
+	echo -e "\033[1A : $VAR1 = Approved"
+	echo -e -n "\nWait until Docker.app will be opened."
+	open -a "Docker.app"
+	
+	# 3 seconds for loop :)
+	for i in {1..3}
+	do
+   		echo -n "."
+		sleep 1
+	done
+	
+	echo " "	
+else
+	echo -e "\033[1A : $VAR1 = Not approved"
+fi
+}
+#################################
+#################################
+isDockerRunning () {
+ERROR=$(docker info)
+#ERROR=$((docker ps) 2>&1 >/dev/null)
+
+if [[ "$ERROR" == *"Cannot connect to the Docker daemon"* ]]; then
+	
+	echo "|-------------------------------------------|"
+	echo "| Docker is not running..."
+
+	askToOpenDocker
+	
+	ERROR=$((docker ps) 2>&1 >/dev/null)
+	
+	if [[ "$ERROR" == *"Cannot connect to the Docker daemon"* ]]; then
+		
+
+
+		echo -e "\n|-------------------------------------------|"
+		echo -e "| Cannot continue without Docker. Shutting down"
+		echo "|-------------------------------------------|"
+
+		sleep 2
+
+		echo -e "\n\n|-------------------------------------------|"
+		echo -e "|-------SHUTTING DOWN-----------------------|"
+		echo -e "|-----------------DOCKER SCRIPT-------------|"
+		echo -e "|----------------------by Patryk Laskowski--|"
+		echo -e "|-------------------------------------------|\n\n"
+
+		sleep 3
+
+		exit 1
+	fi
+else
+	echo -e "\n [x] Docker is running"
+fi
+}
+#################################
+#################################
+createEnviromentalVariables () {
+
+IMAGE_NAME="my_docker_jupyter_project"
+TAG="patryklaskowski/$IMAGE_NAME"
+
+PORT_HOST=1996
+PORT_DOCKER=1306
+
+DIR_PATH="/Desktop/PATRYK/github/my_repository/DOCKER/my_docker_jupyter_project"
+
+DIRECTORY=$HOME$DIR_PATH
+}
+#################################
+#################################
+changeDirectoryTo () {
+DIR=($1)
+echo -e "\nLooking for:\n$DIR"
+
+
+# 3 seconds for loop :)
+for i in {1..6}
+do
+	echo -n "."
+	sleep 0.5
+done
+
+if [ -d "$HOME$DIR" ]; then
+	echo "Provided directory exists | changing directory."
+	cd "$HOME$DIR"
+else	
+	echo -n "Provided directory does not exist | creating one"
+
+	# 3 seconds for loop :)
+	for i in {1..3}
+	do
+   		echo -n "."
+		sleep 1
+	done
+	
+	echo " "
+	
+	cd "$HOME"
+
+	for folder in $(tr '/' ' ' <<< "$DIR")
+	do
+		echo "checking for: /$folder ."
+
+		if [ -d "$folder" ]; then
+			##echo "*/$folder exists | changing directory."
+			cd "$folder"
+		echo ""
+		else
+			##echo "*/$folder does not exists | creating then changing directory."
+			mkdir "$folder"
+			cd "$folder"
+		fi
+	done
+fi
+}
+#################################
+#################################
+isDirectoryChangedCorrectly(){
+if [[ $(pwd) == *"$DIR_PATH" ]]; then
+
+	echo -e "\n [x] Directory changed correctly"
+	echo -e "\nCurrent directory:\n$(pwd)"
+	sleep 2
+else
+	echo -e "\n|-------------------------------------------|"
+	echo -e "| Error while changing directory. Shutting down"
+	echo "|-------------------------------------------|"
+	echo -e "\nCurrent directory:\n$(pwd) \n"
+	echo -e "Suppose to be:\n$DIR_PATH"
+	
+	sleep 2
+
+	echo -e "\n\n|-------------------------------------------|"
+	echo -e "|-------SHUTTING DOWN-----------------------|"
+	echo -e "|-----------------DOCKER SCRIPT-------------|"
+	echo -e "|----------------------by Patryk Laskowski--|"
+	echo -e "|-------------------------------------------|\n\n"
+
+	osascript -e 'quit app "Docker"'
+	echo -e "\n [x] Docker shut down\n"
+
+	sleep 3
+
+	exit 1
+fi
+}
+#################################
+#################################
+isImageAvailableLocally () {
+if [[ $(docker image ls | grep "$TAG") == *"$TAG"* ]]; then
+	echo -e "\n\n|-------------------------------------------|"
+	echo -e -n "| Seems like there is required image onboard ( $TAG ).\n| >  "
+	echo $(docker image ls | grep "$TAG")
+	echo -e "|-------------------------------------------|"
+	read -p "| Do you want to delete that image? [y/n]:  `echo $'\n|-------------------------------------------|'` `echo $'\n : '`" VAR1
+
+	if [ "$VAR1" = "y" ]; then
+		echo -e "\033[1A : $VAR1 = Approved"
+
+		echo -e -n "\nWait until image will be deleted."
+		
+		docker rmi "$TAG" -f > /dev/null 2>&1
+	
+		# 3 seconds for loop :)
+		for i in {1..6}
+		do
+   			echo -n "."
+			sleep 0.5
+		done
+		echo " "
+		
+		echo -e "\n [x] Image deleted\n"
+	
+		echo -e "\n*Image download is about to begin.\n"
+	
+	else
+		echo -e "\033[1A : $VAR1 = Not approved"
+		echo -e "\n*Make sure the image is right (might cause errors)."
+		
+	fi	
+else
+	echo -e "\nNo image like ( $TAG ) detected."
+	echo -e "\n*Image download is about to begin.\n"
+	echo $(docker image ls | grep "$TAG")
+fi
+}
+#################################
+#################################
+isPort_1306_Available () {
+if [[ $(docker ps | grep "1306") == *"1306"* ]]; then
+	
+	echo -e "\n\n|-------------------------------------------|"
+	echo "| Looks like port 1306 is unavailable."
+	echo -e "|-------------------------------------------|"
+	read -p "| Do you want to stop image that uses mentioned port 1306? [y/n]:  `echo $'\n|-------------------------------------------|'` `echo $'\n : '`" VAR2
+	
+	if [ "$VAR2" = "y" ]; then
+		echo -e "\033[1A : $VAR2 = Approved"
+		A=$(docker ps | grep "1306")
+		B=$(echo "$A" |cut -c1-7)
+		docker container stop "$B"
+		
+		echo -e "\n [x] Image has been stopped"
+	
+	else
+		echo -e "\033[1A : $VAR2 = Not approved"
+
+		echo -e "\n\n|-------------------------------------------|"
+		echo -e "| Port 1306 is in use, cannot continue. Shutting down"
+		echo "|-------------------------------------------|"
+		
+		sleep 2
+
+		echo -e "\n\n|-------------------------------------------|"
+		echo -e "|-------SHUTTING DOWN-----------------------|"
+		echo -e "|-----------------DOCKER SCRIPT-------------|"
+		echo -e "|----------------------by Patryk Laskowski--|"
+		echo -e "|-------------------------------------------|\n"
+
+		osascript -e 'quit app "Docker"'
+		echo -e "\n [x] Docker shut down\n"
+
+		sleep 3
+
+		exit 1
+
+	fi
+fi
+}
+#################################
+#################################
+copySHARE_FOLDER () {
+if [ -d "SHARE_FOLDER" ]; then
+	echo -e "\n [x] SHARE_FOLDER exists"
+else
+	echo -e "\n*SHARE_FOLDER does not exist.\n*Creating directory."
+	mkdir SHARE_FOLDER
+	echo -e "\n [x] SHARE_FOLDER now exists"
+fi
+CURR="$(pwd)"
+cd SHARE_FOLDER
+
+echo -e "\n\n|-------------------------------------------|"
+echo -e "| SHARE_FOLDER will be uploaded soon."
+echo "|-------------------------------------------|"
+echo -e "| Go to path below and make sure all needed files are already there."
+echo -e "| > $(pwd)"
+echo -e "| Lately you may use /SHARE_FOLDER_[...] script to update directory inside."
+echo "|-------------------------------------------|"
+
+VAR2="n"
+read -p  "| Are you ready to copy /SHARE_FOLDER into the container now? [y/n]: `echo $'\n|-------------------------------------------|'` `echo $'\n : '`"  VAR2
+
+while [ "$VAR2" != "y" ]
+do	
+	echo -e -n "\033[1A : $VAR2 = Not approved \n| Take your time my friend.\n"
+	read -p "| Are you ready to copy /SHARE_FOLDER into the container now? [y/n]: `echo $'\n|-------------------------------------------|'` `echo $'\n : '`" VAR2
+done
+
+echo -e "\033[1A : $VAR2 = Approved"
+
+cd "$CURR"
+docker cp SHARE_FOLDER/ "$ID":/patryk/my_jupyter_directory
+echo -e "\n [x] /SHARE_FOLDER has been copied"
+}
+#################################
+########             ############
+########  THE END    ############
+########             ############
+#################################
+
+
+
+
+#################################
+########             ############
+####### CRUCIAL PART  ###########
+########             ############
+#################################
+# ----------------------------- #
+
+welcome
+isDockerRunning # Contains askToOpenDocker function
+createEnviromentalVariables
+changeDirectoryTo "$DIR_PATH"
+isDirectoryChangedCorrectly
+
+# ----------------------------- #
+#################################
+# LETS RUN DOCKER
+# ----------------------------- #
+# VARIABLES CHEATSHEET:
+# ----------------------------- #
+# IMAGE_NAME="my_docker_jupyter_project"
+# TAG="patryklaskowski/""$IMAGE_NAME"
+#
+# PORT_HOST=1996
+# PORT_DOCKER=1306
+# ----------------------------- #
+#################################
+# ----------------------------- #
+
+isImageAvailableLocally
+isPort_1306_Available
+
+# Run Docker container
+ID="$(docker run -t -d -p "$PORT_HOST":"$PORT_DOCKER" "$TAG")"
+echo -e "\n [x] Docker image downloaded correctly and running"
+
+# Make script executable
+docker exec --privileged $ID chmod +x run_jupyter_script.sh
+echo -e "\n [x] Execution mode on run_jupyter_script.sh applied"
+
+# Execute the script
+docker exec --privileged $ID ./run_jupyter_script.sh
+echo -e "\n [x] /run_jupyter_script.sh is running"
+
+# If script ran with no errors, inside the container suppose to be path as follows "/patryk/my_jupyter_directory".
+# So now, check if SHARE_FOLDER exists, (if not create one) then copy inside the container.
+copySHARE_FOLDER
+
+echo -e -n "\nThe browser will open up in 3s."
+# 3 seconds for loop :)
+for i in {1..6}
+do
+	echo -n "."
+	sleep 0.5
+done
+echo " "
+
+# Open the browser with jupyter running (localhost:1996)
+# This token is provided inside the run_jupyter_script.sh when jupyter specified
+open -a "google chrome" "http://localhost:$PORT_HOST/?token=hwdp1234"
+echo -e "\n [x] Google Chrome opened\n"
+
+
+echo -e "\n\n|-------------------------------------------|"
+echo -e "|-------DONE, THANK YOU---------------------|"
+echo -e "|-------FOR USING DOCKER SCRIPT-------------|"
+echo -e "|----------------------by Patryk Laskowski--|"
+echo -e "|-------------------------------------------|\n"
+
+
+
+# ----------------------------- #
+#################################
+########             ############
+########  THE END    ############
+########             ############
+#################################
+
+#################################
+
+#################################
+#### MY CHEATSCHEET #############
+#################################
+#> docker exec -it --privileged "$ID" jupyter notebook stop 1306
+#> docker cp "$ID":/patryk/my_jupyter_directory $DIRECTORY
+
+#> docker login
+#> docker build -t patryklaskowski/my_docker_jupyter_project .
+#> ID="$(docker run -t -d -p 1996:1306 patryklaskowski/my_docker_jupyter_project)"
+#> docker exec --privileged $ID chmod +x run_jupyter_script.sh
+#> docker exec --privileged $ID ./run_jupyter_script.sh
+#> docker push patryklaskowski/my_docker_jupyter_project
+#################################
+#### SO FAR SO GOOD #############
+#################################
