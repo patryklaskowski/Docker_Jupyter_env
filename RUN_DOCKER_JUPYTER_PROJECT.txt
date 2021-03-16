@@ -28,17 +28,17 @@ read -p "| Do you want to open Docker.app? [y/n]:  `echo $'\n|------------------
 
 if [ "$VAR1" = "y" ]; then
 	echo -e "\033[1A : $VAR1 = Approved"
-	echo -e -n "\nWait until Docker.app will be opened."
+	echo -e -n "\nWait 10 sec while Docker.app is opening."
 	open -a "Docker.app"
-	
-	# 3 seconds for loop :)
-	for i in {1..3}
+
+	# 10 seconds for loop :)
+	for i in {1..10}
 	do
    		echo -n "."
 		sleep 1
 	done
-	
-	echo " "	
+
+	echo " "
 else
 	echo -e "\033[1A : $VAR1 = Not approved"
 fi
@@ -50,16 +50,16 @@ ERROR=$(docker info)
 #ERROR=$((docker ps) 2>&1 >/dev/null)
 
 if [[ "$ERROR" == *"Cannot connect to the Docker daemon"* ]]; then
-	
+
 	echo "|-------------------------------------------|"
 	echo "| Docker is not running..."
 
 	askToOpenDocker
-	
+
 	ERROR=$((docker ps) 2>&1 >/dev/null)
-	
+
 	if [[ "$ERROR" == *"Cannot connect to the Docker daemon"* ]]; then
-		
+
 
 
 		echo -e "\n|-------------------------------------------|"
@@ -93,6 +93,7 @@ PORT_HOST=1996
 PORT_DOCKER=1306
 
 DIR_PATH="/Desktop/PATRYK/github/my_repository/DOCKER/my_docker_jupyter_project"
+DIR_PATH="/Desktop/Docker_Jupyter_env"
 
 DIRECTORY=$HOME$DIR_PATH
 }
@@ -113,7 +114,7 @@ done
 if [ -d "$HOME$DIR" ]; then
 	echo "Provided directory exists | changing directory."
 	cd "$HOME$DIR"
-else	
+else
 	echo -n "Provided directory does not exist | creating one"
 
 	# 3 seconds for loop :)
@@ -122,9 +123,9 @@ else
    		echo -n "."
 		sleep 1
 	done
-	
+
 	echo " "
-	
+
 	cd "$HOME"
 
 	for folder in $(tr '/' ' ' <<< "$DIR")
@@ -157,7 +158,7 @@ else
 	echo "|-------------------------------------------|"
 	echo -e "\nCurrent directory:\n$(pwd) \n"
 	echo -e "Suppose to be:\n$DIR_PATH"
-	
+
 	sleep 2
 
 	echo -e "\n\n|-------------------------------------------|"
@@ -188,9 +189,9 @@ if [[ $(docker image ls | grep "$TAG") == *"$TAG"* ]]; then
 		echo -e "\033[1A : $VAR1 = Approved"
 
 		echo -e -n "\nWait until image will be deleted."
-		
+
 		docker rmi "$TAG" -f > /dev/null 2>&1
-	
+
 		# 3 seconds for loop :)
 		for i in {1..6}
 		do
@@ -198,16 +199,16 @@ if [[ $(docker image ls | grep "$TAG") == *"$TAG"* ]]; then
 			sleep 0.5
 		done
 		echo " "
-		
+
 		echo -e "\n [x] Image deleted\n"
-	
+
 		echo -e "\n*Image download is about to begin.\n"
-	
+
 	else
 		echo -e "\033[1A : $VAR1 = Not approved"
 		echo -e "\n*Make sure the image is right (might cause errors)."
-		
-	fi	
+
+	fi
 else
 	echo -e "\nNo image like ( $TAG ) detected."
 	echo -e "\n*Image download is about to begin.\n"
@@ -218,27 +219,27 @@ fi
 #################################
 isPort_1306_Available () {
 if [[ $(docker ps | grep "1306") == *"1306"* ]]; then
-	
+
 	echo -e "\n\n|-------------------------------------------|"
 	echo "| Looks like port 1306 is unavailable."
 	echo -e "|-------------------------------------------|"
 	read -p "| Do you want to stop image that uses mentioned port 1306? [y/n]:  `echo $'\n|-------------------------------------------|'` `echo $'\n : '`" VAR2
-	
+
 	if [ "$VAR2" = "y" ]; then
 		echo -e "\033[1A : $VAR2 = Approved"
 		A=$(docker ps | grep "1306")
 		B=$(echo "$A" |cut -c1-7)
 		docker container stop "$B"
-		
+
 		echo -e "\n [x] Image has been stopped"
-	
+
 	else
 		echo -e "\033[1A : $VAR2 = Not approved"
 
 		echo -e "\n\n|-------------------------------------------|"
 		echo -e "| Port 1306 is in use, cannot continue. Shutting down"
 		echo "|-------------------------------------------|"
-		
+
 		sleep 2
 
 		echo -e "\n\n|-------------------------------------------|"
@@ -282,7 +283,7 @@ VAR2="n"
 read -p  "| Are you ready to copy /SHARE_FOLDER into the container now? [y/n]: `echo $'\n|-------------------------------------------|'` `echo $'\n : '`"  VAR2
 
 while [ "$VAR2" != "y" ]
-do	
+do
 	echo -e -n "\033[1A : $VAR2 = Not approved \n| Take your time my friend.\n"
 	read -p "| Are you ready to copy /SHARE_FOLDER into the container now? [y/n]: `echo $'\n|-------------------------------------------|'` `echo $'\n : '`" VAR2
 done
