@@ -18,10 +18,14 @@ cd Docker_Jupyter_env &&
 ```
 ...and follow the instructions in Terminal.
 
+<img src="https://github.com/patryklaskowski/Docker_Jupyter_env/blob/master/images/run.png?raw=true" alt="run.png" width="1000">
+
 Script fire Docker container with Jupyter Notebook on port `1306`. <br>
 Container's port `1306` is published to the host's `1996`. <br>
 Default token is `hwdp1234`. <br>
 Therefore this is url to Jupyter Notebook: http://localhost:1996/tree?token=hwdp1234
+
+<img src="https://github.com/patryklaskowski/Docker_Jupyter_env/blob/master/images/jupyter.png?raw=true" alt="run.png" width="1000">
 
 ---
 **NOTE**
